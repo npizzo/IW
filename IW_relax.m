@@ -1,0 +1,163 @@
+% Can we explain the 2d spectra from Luc's observations using WKB?
+% NP June 2020 
+% load data
+cd /Users/npizzo/Documents/GitHub/IW
+load('nick.mat')
+load('nick2.mat')
+load('Pizzo_background.mat');
+load('ForNick2.mat');
+%%
+x=Longitude*111319.5; 
+x=x-x(1);
+g=9.81;
+clf
+% subplot(2,1,1)
+set(gca,'fontsize',20)
+xlabel('Longitude','interpreter','latex')
+xlim([ min(x) max(x)])
+yyaxis left
+plot(x,U,'linewidth',2)
+dudx=gradient(U)./gradient(x);
+% hold on
+yyaxis right
+plot(x,dudx,'--')
+hold on
+plot(x(140),dudx(140),'o')
+set(gca,'fontsize',20)
+xlabel('Position (m)','interpreter','latex')
+ylabel('$U$ (m/s)','interpreter','latex')
+
+KX=background.KX;
+KY=background.KY;
+Spec=background.Eoka2;
+% redefine KX,KY,Spec to only include positive kx branch. 
+KX2=KX(:,512:end);
+KY2=KY(:,512:end);
+Ly=length(KX2(:,1));
+Lx=length(KX2(1,:));
+Spec2=Spec(:,512:end);
+%%
+dNodk=zeros(Ly,Lx);
+No=Spec2./sqrt(g*sqrt(KY2.^2+KX2.^2));
+for i=1:Ly
+    dNodk(i,:)=gradient(No(i,:))./gradient(KX2(1,:));
+end
+%% we need to do this for each band. 
+deltaN=zeros(Ly,Lx,6);N=deltaN;S=deltaN;
+tau=100;
+for j=1:6
+for i=1:Ly
+    deltaN(i,:,j)=tau*SUB{j}.dUdx.*KX2(i,:).*dNodk(i,:);
+end
+end
+
+for i=1:6
+N(:,:,i)=No+deltaN(:,:,i);
+S(:,:,i)=N(:,:,i).*sqrt(g*sqrt(KY2.^2+KX2.^2));
+end
+% omnidirectional spectra
+% background spectra
+[XFFT_rt,theta,r,xZ,yZ] = xy2rt(background.Eoka2,...
+    background.KX(1,:),background.KY(:,1));
+    dtheta = theta(2)-theta(1);
+    clear omnidir_fft_t
+    % sum over theta
+    for i=1:length(XFFT_rt(1,:))
+        omnidir_fft_t(i,:) = (XFFT_rt(1:length(r),i)'.*r)*dtheta;
+    end
+    background_omnidir_PHI = nansum(omnidir_fft_t);
+    background_omnidir_k  = r;
+% compute theoretical omnidirectional spectra   
+%
+theory_omni=zeros(1021,6); theory_k=theory_omni;
+for j=1:6
+    
+ [XFFT_rt,theta,r,xZ,yZ] = xy2rt(S(:,:,j),...
+    KX2(1,:),KY2(:,1));
+    dtheta = theta(2)-theta(1);
+    clear omnidir_fft_t
+    % sum over theta
+    for i=1:length(XFFT_rt(1,:))
+        omnidir_fft_t(i,:) = (XFFT_rt(1:length(r),i)'.*r)*dtheta;
+    end
+    theory_omni(:,j) = nansum(omnidir_fft_t);
+    theory_k(:,j)  = r;   
+end
+% look at all the bands
+clf
+subplot(3,2,5)
+loglog(SUB{1}.omnidir_k ,...
+    SUB{1}.omnidir_PHI,'b','linewidth',3)
+hold on
+loglog(theory_k(:,1),2*smooth(theory_omni(:,1),5),...
+    'color',[1/2 1/2 1/2],'linewidth',2);
+xlim([5e-1 1e1])
+ylim([1e-6 5e-2])
+subplot(3,2,3)
+loglog(SUB{2}.omnidir_k ,...
+    SUB{2}.omnidir_PHI,'b','linewidth',3 )
+hold on
+loglog(theory_k(:,2),2*smooth(theory_omni(:,2),5),...
+    'color',[1/2 1/2 1/2],'linewidth',2);
+xlim([5e-1 1e1])
+ylim([1e-6 5e-2])
+subplot(3,2,1)
+loglog(SUB{3}.omnidir_k ,...
+    SUB{3}.omnidir_PHI,'b','linewidth',3 )
+hold on
+loglog(theory_k(:,3),2*smooth(theory_omni(:,3),5),...
+    'color',[1/2 1/2 1/2],'linewidth',2);
+xlim([5e-1 1e1])
+ylim([1e-6 5e-2])
+subplot(3,2,6)
+loglog(SUB{4}.omnidir_k ,...
+    SUB{4}.omnidir_PHI,'r','linewidth',3 )
+hold on
+loglog(theory_k(:,4),2*smooth(theory_omni(:,4),5),...
+    'color',[1/2 1/2 1/2],'linewidth',2);
+xlim([5e-1 1e1])
+ylim([1e-6 5e-2])
+subplot(3,2,4)
+loglog(SUB{5}.omnidir_k ,...
+    SUB{5}.omnidir_PHI,'r','linewidth',3 )
+hold on
+loglog(theory_k(:,5),2*smooth(theory_omni(:,5),5),...
+    'color',[1/2 1/2 1/2],'linewidth',2);
+xlim([5e-1 1e1])
+ylim([1e-6 5e-2])
+subplot(3,2,2)
+loglog(SUB{6}.omnidir_k ,...
+    SUB{6}.omnidir_PHI,'r','linewidth',3 )
+hold on
+loglog(theory_k(:,6),2*smooth(theory_omni(:,6),5),...
+    'color',[1/2 1/2 1/2],'linewidth',2);
+xlim([5e-1 1e1])
+ylim([1e-6 5e-2])
+% set(gca,'fontsize',22)
+% ylim([2e-6 1.5])
+% xlim([3e-2 1e1])
+% l1=legend('Smooth 1','Smooth 2','Smooth 3',...
+%     'Rough 1','Rough 2','Rough 3','Background');
+% set(l1,'interpreter','latex')
+% xlabel('$k\ (rad/m)$','interpreter','latex')
+% ylabel('$\phi(k)\ (m^3  rad^{-1})$','interpreter','latex')
+%% contour plot this
+clf
+subplot(2,1,1)
+contourf(KX2,KY2,log10(abs(Spec2)),10)
+xlim([0 5])
+ylim([-5 5])
+caxis([-8 -3])
+colorbar
+xlabel('$k_x$','interpreter','latex')
+ylabel('$k_y$','interpreter','latex')
+set(gca,'fontsize',22)
+subplot(2,1,2)
+contourf(KX2,KY2,log10(abs(S(:,:,1))),10)
+xlim([0 5])
+ylim([-5 5])
+caxis([-8 -3])
+colorbar
+xlabel('$k_x$','interpreter','latex')
+ylabel('$k_y$','interpreter','latex')
+set(gca,'fontsize',22)
