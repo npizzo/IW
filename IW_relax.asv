@@ -8,14 +8,14 @@ load('Pizzo_background.mat');
 load('ForNick2.mat');
 %%
 x2=Longitude*111319.5; 
-x2=x2-x2(1);
+x=x-x(1);
 g=9.81;
-clf
+% clf
 lonref = -120.78;
 latref =  34.902;
 [x,y]=lonlat2m(Longitude,...
     34.902*ones(length(Longitude)),lonref,latref);
-%
+%%
 % subplot(2,1,1)
 set(gca,'fontsize',20)
 xlabel('Longitude','interpreter','latex')
@@ -166,23 +166,3 @@ colorbar
 xlabel('$k_x$','interpreter','latex')
 ylabel('$k_y$','interpreter','latex')
 set(gca,'fontsize',22)
-%%
-% look at this all on one plot
-clf
-loglog(SUB{3}.omnidir_k ,...
-    SUB{3}.omnidir_PHI,'b','linewidth',3)
-hold on
-loglog(theory_k(:,1),2*theory_omni(:,1),...
-    'color',[1/2 1/2 1/2],'linewidth',1);
-hold on
-loglog(SUB{6}.omnidir_k ,...
-    SUB{6}.omnidir_PHI,'r','linewidth',3 )
-hold on
-loglog(theory_k(:,6),2*theory_omni(:,6),...
-    'color',[1/2 0 1/2],'linewidth',1);
-loglog(background_omnidir_k,2*background_omnidir_PHI,...
-    'k','linewidth',2);
-xlim([3e-1 1e1])
-ylim([1e-6 5e-2])
-set(gcf, 'color', 'w');
-set(gcf, 'Position',  [0, 0, 300, 300])
